@@ -1,0 +1,16 @@
+body, html {
+    padding: 0px;
+    margin: 0px;
+    background: #f2f2f2;
+}
+
+.module {
+	width: 100%;
+	min-height: 110px;
+	margin-bottom: 10px;
+}
+
+#map {
+	width: 100%;
+	min-height: 500px;
+}
