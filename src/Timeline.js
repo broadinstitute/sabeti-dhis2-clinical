@@ -2,22 +2,23 @@ import * as d3 from 'd3';
 
 function Timeline(){
 	let W, H, M = {t:20,r:20,b:20,l:20};
-	const baseRadius = 60;
-	let timeRange = d3.range(1, 13, 1);
-	let pieRange = d3.range(0, 12, 1);
+	let dis = d3.dispatch('disBrush');
 
 	function exports(selection){
 		let arr = selection.datum()?selection.datum():[];
 		W = W || selection.node().clientWidth - M.l - M.r;
 		H = H || selection.node().clientHeight - M.t - M.b;
 
-
 		// ** ------- SCALES & AXES ------- **
 		let timeExtent = d3.extent(arr, function(d) { return new Date(d.key); })
 
+		console.log(timeExtent);
+
 		let scaleTime = d3.scaleTime()
 			.domain([timeExtent[0], timeExtent[1]])
-			.range([0 + M.l, W]);
+			.range([0, W])
+			.clamp(true)
+			.nice();
 
 		let scaleVals = d3.scaleLinear()
 			.domain([0, d3.max(arr, function(d) { return +d.value })])
@@ -26,6 +27,10 @@ function Timeline(){
 		let xAxis = d3.axisBottom(scaleTime)
 			// .tickFormat(d3.timeFormat("%Y-%m-%d"));
 		let yAxis = d3.axisLeft(scaleVals).ticks(4);
+
+		let brush = d3.brushX()
+			.extent([[0,0], [W, H]])
+			.on("brush", brushed);
 
 		// ** ------- APPEND SVG ------- **
 		let svg = selection.selectAll('svg')
@@ -53,7 +58,28 @@ function Timeline(){
 		svgEnter.select('.axisX').call(xAxis);
 		svgEnter.select('.axisY').call(yAxis);
 
+		let context = plotEnter.append('g').attr('class', 'context').attr('transform', 'translate(' + 0 + ',' + 0 + ')');
+
+		context.append('g')
+			.attr('class', 'brush')
+			.call(brush)
+			.call(brush.move, scaleTime.range())
+
+		function brushed() {
+			let selection = d3.event.selection;
+			let startDate = scaleTime.invert(selection[0]);
+			let endDate = scaleTime.invert(selection[1]);
+
+			dis.call('disBrush', null, {startDate: startDate, endDate: endDate});
+		}
+
 	};//-->END exports()
+
+	exports.on = function(event, callback){
+		dis.on(event, callback);
+		return this;
+	}
+
 	return exports;
 }//-->END Timeline()
 

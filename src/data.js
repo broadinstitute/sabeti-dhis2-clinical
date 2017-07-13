@@ -8,7 +8,7 @@ function DataLoader(){
 		return {
 			program: d.program,
 			orgUnit: d.orgUnitName,
-			eventDate: new Date(d.eventDate),
+			eventDate: parseTime(d.eventDate),
 			outcome: d['Kenema | Outcome']?d['Kenema | Outcome']:undefined,
 			district: d.District,
 			chiefdom: d.Chiefdom,
@@ -25,6 +25,14 @@ function DataLoader(){
 	}
 
 	function parseLocation(loc){ return  loc.replace(/\[|\]/g, '').split(',') } //remove '[' and ']' from '[lng, lat]'
+
+	function parseTime(timeStr){
+		let time = timeStr.split('-'),
+			year = +time[0],
+			month = +time[1]-1,
+			day = +time[2];
+		return new Date(year, month, day);
+	}
 
 	function exports(){
 		q

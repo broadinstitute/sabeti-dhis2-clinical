@@ -11,8 +11,9 @@ import Timeline from './Timeline';
 
 
 // ** ------- MODULES INIT ------- **
-let timeline = Timeline();
-
+let timeline = Timeline().on('disBrush', data => {
+	console.log(`MAIN: ${data.startDate} --> ${data.endDate}`)
+});
 
 // ** ------- DataLoader() ------- **
 let getData = DataLoader()
@@ -20,13 +21,14 @@ let getData = DataLoader()
 
 	.on('loaded', data => {
 		const allCases = data.cases;
-		// console.log(allCases);
 
 		// data nested by eventDate
 		const casesByDate = d3.nest()
 			.key(function(d) { return d.eventDate; })
 			.rollup(function(cases) { return cases.length; })
 			.entries(allCases);
+
+
 
 		// console.log(casesByDate);
 		d3.select('#timeline').datum(casesByDate).call(timeline);
