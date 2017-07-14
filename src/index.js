@@ -12,7 +12,7 @@ import Timeline from './Timeline';
 
 // ** ------- MODULES INIT ------- **
 let timeline = Timeline().on('disBrush', data => {
-	console.log(`MAIN: ${data.startDate} --> ${data.endDate}`)
+	// console.log(`MAIN: ${data.startDate} --> ${data.endDate}`)
 });
 
 // ** ------- DataLoader() ------- **
@@ -42,11 +42,61 @@ let getData = DataLoader()
           maxZoom: 18,
           }).addTo(map);
 
-    allCases.forEach(i => {
-    	if (i.lat | i.lng != undefined) {
-    		marker = new L.marker([i.lat, i.lng]).addTo(map);
-    	}
+    //an array with only objects that have a valid lat and long
+    let locationArr = allCases.filter(function(el) { return !(el.lat === undefined || el.lng === undefined) })
+
+    locationArr.forEach(d => { marker = new L.marker([d.lat, d.lng]).addTo(map); });
+
+
+let drawLayer = function() {
+    var bounds = map.getBounds(),
+        topLeft = map.latLngToLayerPoint(bounds.getNorthWest()),
+        bottomRight = map.latLngToLayerPoint(bounds.getSouthEast()),
+        existing = d3.set(),
+        drawLimit = bounds.pad(0.4);
+
+    let filteredPoints = locationArr.filter(function(p){
+    	let latlng = new L.LatLng(p.lat, p.lng);
+    	
+    	let point = map.latLngToLayerPoint(latlng);
+
+    	p.x = point.x;
+      p.y = point.y;
+    	return drawLimit.contains(latlng);
     })
+
+    var svg = d3.select(map.getPanes().overlayPane).append("svg")
+      .attr('id', 'overlay')
+      .attr("class", "leaflet-zoom-hide")
+      .style("width", map.getSize().x + 'px')
+      .style("height", map.getSize().y + 'px')
+      .style("margin-left", topLeft.x + "px")
+      .style("margin-top", topLeft.y + "px");
+
+    var g = svg.append("g")
+      .attr("transform", "translate(" + (-topLeft.x) + "," + (-topLeft.y) + ")");
+
+    let svgPoints = svg.selectAll('g')
+    	.data(filteredPoints)
+    	.enter()
+    	.append('g')
+
+    svgPoints.append('circle')
+    	.attr("transform", function(d) { console.log(d); return "translate(" + d.x + "," + d.y + ")"; })
+    	.attr('r', 5);
+  }
+
+    //Add layer of SVGs
+    let mapLayer = {
+    	onAdd: function(map) {
+    		map.on('viewreset moveend', drawLayer);
+    		drawLayer();
+    	}
+    };
+
+	  map.on('ready', function() {
+	      map.addLayer(mapLayer);
+	  });
 
 	}); //-->END .on('loaded')
 
