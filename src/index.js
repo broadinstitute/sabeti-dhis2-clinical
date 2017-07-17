@@ -1,6 +1,7 @@
 // ** ------- DEPENDENCIES ------- **
 import './styles/index.css';
 import * as d3 from 'd3';
+import * as hexbin from 'd3-hexbin';
 import * as L from 'leaflet';
 let cf = require('crossfilter');
 
@@ -12,28 +13,29 @@ import Timeline from './Timeline';
 
 // ** ------- MODULES INIT ------- **
 let timeline = Timeline().on('disBrush', data => {
-	// console.log(`MAIN: ${data.startDate} --> ${data.endDate}`)
+  // console.log(`MAIN: ${data.startDate} --> ${data.endDate}`)
 });
 
 // ** ------- DataLoader() ------- **
 let getData = DataLoader()
-	.on('error', err => { console.log(err); })
+  .on('error', err => { console.log(err); })
 
-	.on('loaded', data => {
-		const allCases = data.cases;
+  .on('loaded', data => {
+    const allCases = data.cases;
+    const geoCases = data.geoCases;
 
-		// data nested by eventDate
-		const casesByDate = d3.nest()
-			.key(function(d) { return d.eventDate; })
-			.rollup(function(cases) { return cases.length; })
-			.entries(allCases);
+    console.log(geoCases);
 
+    // data nested by eventDate
+    const casesByDate = d3.nest()
+      .key(function(d) { return d.eventDate; })
+      .rollup(function(cases) { return cases.length; })
+      .entries(allCases);
 
+    // console.log(casesByDate);
+    d3.select('#timeline').datum(casesByDate).call(timeline);
 
-		// console.log(casesByDate);
-		d3.select('#timeline').datum(casesByDate).call(timeline);
-
-		let map = L.map('map').setView([8.4506145, -11.3474766], 8);
+    let map = L.map('map').setView([8.4506145, -11.3474766], 8);
         let mapLink = 
           '<a href="http://openstreetmap.org">OpenStreetMap</a>';
         L.tileLayer(
@@ -45,62 +47,69 @@ let getData = DataLoader()
     //an array with only objects that have a valid lat and long
     let locationArr = allCases.filter(function(el) { return !(el.lat === undefined || el.lng === undefined) })
 
+    let geoArr = geoCases.filter(function(el, i){
+      return !(el.features[0].geometry.coordinates[0] === undefined || el.features[0].geometry.coordinates[1] === undefined)
+    })
+
     locationArr.forEach(d => { marker = new L.marker([d.lat, d.lng]).addTo(map); });
 
+    locationArr.forEach(function(d) {
+      d.LatLng = new L.LatLng(d.lat, d.lng)
+    })
 
-let drawLayer = function() {
-    var bounds = map.getBounds(),
+
+    //initialize svg layer
+
+    let svgLayer = L.svg();
+    svgLayer.addTo(map);
+    let projectPoint;
+
+    let svg = d3.select("#map").select("svg");
+    let g = d3.select("#map").select("svg").select('g');
+    g.attr("class", "leaflet-zoom-hide");
+
+    let transform = d3.geoTransform({point: projectPoint}),
+        path = d3.geoPath().projection(transform);
+
+    let d3_features = g.selectAll('path')
+      .datum({type: "FeatureCollection", features: geoArr.features})
+      .enter().append('path');
+
+    map.on('viewreset', reset);
+
+    reset();
+
+    function reset() {
+        
+    let bounds = map.getBounds(),
         topLeft = map.latLngToLayerPoint(bounds.getNorthWest()),
         bottomRight = map.latLngToLayerPoint(bounds.getSouthEast()),
         existing = d3.set(),
         drawLimit = bounds.pad(0.4);
 
-    let filteredPoints = locationArr.filter(function(p){
-    	let latlng = new L.LatLng(p.lat, p.lng);
-    	
-    	let point = map.latLngToLayerPoint(latlng);
-
-    	p.x = point.x;
-      p.y = point.y;
-    	return drawLimit.contains(latlng);
-    })
-
-    var svg = d3.select(map.getPanes().overlayPane).append("svg")
-      .attr('id', 'overlay')
-      .attr("class", "leaflet-zoom-hide")
-      .style("width", map.getSize().x + 'px')
+      svg.style("width", map.getSize().x + 'px')
       .style("height", map.getSize().y + 'px')
       .style("margin-left", topLeft.x + "px")
       .style("margin-top", topLeft.y + "px");
 
-    var g = svg.append("g")
-      .attr("transform", "translate(" + (-topLeft.x) + "," + (-topLeft.y) + ")");
+      g.attr("transform", "translate(" + (-topLeft.x) + "," + (-topLeft.y) + ")");
 
-    let svgPoints = svg.selectAll('g')
-    	.data(filteredPoints)
-    	.enter()
-    	.append('g')
-
-    svgPoints.append('circle')
-    	.attr("transform", function(d) { console.log(d); return "translate(" + d.x + "," + d.y + ")"; })
-    	.attr('r', 5);
-  }
-
-    //Add layer of SVGs
-    let mapLayer = {
-    	onAdd: function(map) {
-    		map.on('viewreset moveend', drawLayer);
-    		drawLayer();
-    	}
-    };
-
-	  map.on('ready', function() {
-	      map.addLayer(mapLayer);
-	  });
-
-	}); //-->END .on('loaded')
+      // initialize the path data 
+      d3_features.attr("d", path)
+        .style("fill-opacity", 0.7)
+        .attr('fill','blue');
 
 
-	// ** ------- DATA QUERY ------- **
+    // Use Leaflet to implement a D3 geometric transformation.
+      function projectPoint(x, y) {
+        let point = map.latLngToLayerPoint(new L.LatLng(y, x));
+        this.stream.point(point.x, point.y);
+      }
+    }
+
+  }); //-->END .on('loaded')
+
+
+  // ** ------- DATA QUERY ------- **
 getData();
 
