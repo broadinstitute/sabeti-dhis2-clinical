@@ -3,7 +3,11 @@ import './styles/index.css';
 import * as d3 from 'd3';
 import {hexbin} from 'd3-hexbin';
 import * as L from 'leaflet';
+// import '@asymmetrik/leaflet-d3'
 let cf = require('crossfilter');
+let pixelCoords = [];
+
+// console.log(HexbinLayer());
 
 
 // ** ------- JS MODULES ------- **
@@ -42,7 +46,8 @@ let getData = DataLoader()
 
     //array with all the coordinates (used for hexagonal binning)    
     let coords = []
-    geoArr.forEach(el => { coords.push([el.features[0].geometry.coordinates[0], el.features[0].geometry.coordinates[1]]) });
+    
+    geoArr.forEach(el => {coords.push([el.features[0].geometry.coordinates[0], el.features[0].geometry.coordinates[1]]) });
 
 
     // ** ------- calling drawing functions ------- **
@@ -52,10 +57,7 @@ let getData = DataLoader()
     // calling the map
     main(geoArr);
 
-    function main(data){
-      addLmaps();
-      drawFeatures(data);   
-    }
+
 
     function addLmaps() {
       let marker;
@@ -68,14 +70,25 @@ let getData = DataLoader()
         }).addTo(map);
       L.svg().addTo(map);
 
+      // var hexLayer = L.hexbinLayer().addTo(map);
+
       // locationArr.forEach(d => { marker = new L.marker([d.lat, d.lng]).addTo(map); });
       // locationArr.forEach(function(d) { d.LatLng = new L.LatLng(d.lat, d.lng) })
+    }
+
+        function main(data){
+      addLmaps();
+      drawFeatures(data);   
     }
 
     function projectPoint(x, y) {
       let point = map.latLngToLayerPoint(new L.LatLng(y, x));
       this.stream.point(point.x, point.y);
     }
+
+
+
+    console.log(pixelCoords);
 
     function drawFeatures(data) {
       const svg = d3.select('#map').select('svg');
@@ -84,47 +97,62 @@ let getData = DataLoader()
       let transform = d3.geoTransform({point: projectPoint});
       let path = d3.geoPath().projection(transform);
       path.pointRadius(7);
+
+      // var randomX = d3.randomNormal(width / 2, 80),
+      // randomY = d3.randomNormal(height / 2, 80),
+      // points = d3.range(50).map(function() { return [randomX(), randomY()]; });
+
+
+    coords.forEach(el => {
+      let point = map.latLngToLayerPoint([el[1], el[0]]);
       
-      var randomX = d3.randomNormal(width / 2, 80),
-      randomY = d3.randomNormal(height / 2, 80),
-      points = d3.range(50).map(function() { return [randomX(), randomY()]; });
+      pixelCoords.push([point.x, point.y]);
+      return pixelCoords;
+    });
 
       let hex = hexbin()
-        // .extent([0, 0], [width, height])
+      .radius(20)
+        .extent([[0, 0], [width, height]])
+      
+      console.log(hex(pixelCoords));
+      console.log(coords);
 
       let radius = d3.scaleLinear()
-        .domain([0, 3])
-        .range([5, 30]);
+        .domain([1, 3])
+        .range([5, 100]);
 
-      console.log(hex(coords));
+      let color = d3.scaleSequential(d3.interpolateLab("white", "steelblue"))
+        .domain([1, 3]);
 
-      console.log(map.getPixelBounds())
-  
       let featureElement = svg.selectAll('path')
           .data(data)
           .enter()
           .append('path')
           .attr('stroke', 'gray')
           .attr('fill', 'red')
-          .attr("fill-opacity", 1);
+          .attr("fill-opacity", 0.2);
 
-      svg.append('g')
+      let hexagons = svg.append('g')
         .attr('class', 'hexagon')
         .selectAll('path')
-        .data(hex(coords))
+        .data(hex(pixelCoords).sort(function(a,b) { return b-length - a.length; }))
         .enter().append('path')
-          .attr("d", function(d) { return hex.hexagon(radius(d.length)); })
-          .attr("transform", function(d) {
-            console.log(map.latLngToLayerPoint([d.x, d.y]))
-            return "translate(" + map.latLngToLayerPoint([d.y, d.x]).x + "," + map.latLngToLayerPoint([d.y, d.x]).y + ")";
+          .attr("d", hex.hexagon())
+          .attr("transform", function(d) {return "translate(" + d.x + "," + d.y + ")";
           })
-          .attr('fill', 'blue');
+          .attr("fill", function(d) { return color(d.length); })
+          .attr('fill-opacity', 1);
   
       map.on('moveend', update);
       update();
   
-      function update() {   
+      function update() {
           featureElement.attr('d', path);
+          hexagons
+          .data(hex(pixelCoords).sort(function(a,b) { return b-length - a.length; }))
+          .attr("d", hex.hexagon())
+          hexagons.attr("transform", function(d) {return "translate(" + d.x + "," + d.y + ")";
+          })
       }
     }
   }); //-->END .on('loaded')
