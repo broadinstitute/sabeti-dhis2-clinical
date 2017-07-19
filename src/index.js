@@ -2,23 +2,54 @@
 import './styles/index.css';
 import * as d3 from 'd3';
 import {hexbin} from 'd3-hexbin';
+import {contourDensity} from 'd3-contour';
 import * as L from 'leaflet';
+let _ = require('lodash');
 // import '@asymmetrik/leaflet-d3'
 let cf = require('crossfilter');
 let pixelCoords = [];
-
-// console.log(HexbinLayer());
 
 
 // ** ------- JS MODULES ------- **
 import DataLoader from './data';
 import Timeline from './Timeline';
+import LMap from './Map';
+
+
+let dis = d3.dispatch('timeUpdate');
+
+// ** ------- MAIN MAP ------- **
+let control = d3.map()
+
+control.set('startDate', '');
+control.set('endDate', '');
 
 
 // ** ------- MODULES INIT ------- **
 let timeline = Timeline().on('disBrush', data => {
-  // console.log(`MAIN: ${data.startDate} --> ${data.endDate}`)
+  let startDate = data.startDate,
+      endDate = data.endDate
+
+  dis.call('timeUpdate', null, {start: startDate, end: endDate});
 });
+
+
+function mainDraw(array) {
+  let filtered = [];
+
+  dis.on('timeUpdate', d => {
+    filtered = _.filter(array, function(el) {
+      return el.features[0].properties.eventDate >= d.start && el.features[0].properties.eventDate <= d.end
+    })
+    
+    console.log(filtered.length);
+
+  });
+
+
+}
+
+let mapFunction = LMap();
 
 // ** ------- DataLoader() ------- **
 let getData = DataLoader()
@@ -28,14 +59,17 @@ let getData = DataLoader()
     let map;
     const allCases = data.cases;
     const geoCases = data.geoCases;
+    const dummyCases = data.dummyCases;
 
+    mainDraw(dummyCases);
 
     // ** ------- Data Models ------- **
     // nested by eventDate
     const casesByDate = d3.nest()
-      .key(function(d) { return d.eventDate; })
-      .rollup(function(cases) { return cases.length; })
-      .entries(allCases);
+      .key(function(d) { return d.features[0].properties.eventDate; })
+      .rollup(function(cases) {return cases.length})
+      .entries(dummyCases);
+
 
     //arrays with only objects that have a valid lat and long
     let locationArr = allCases.filter(function(el) { return !(el.lat === undefined || el.lng === undefined) })
@@ -46,8 +80,8 @@ let getData = DataLoader()
 
     //array with all the coordinates (used for hexagonal binning)    
     let coords = []
-    
-    geoArr.forEach(el => {coords.push([el.features[0].geometry.coordinates[0], el.features[0].geometry.coordinates[1]]) });
+    // geoArr.forEach(el => {coords.push([el.features[0].geometry.coordinates[0], el.features[0].geometry.coordinates[1]]) });
+    dummyCases.forEach(el => {coords.push([el.features[0].geometry.coordinates[0], el.features[0].geometry.coordinates[1]]) });
 
 
     // ** ------- calling drawing functions ------- **
@@ -55,9 +89,7 @@ let getData = DataLoader()
     d3.select('#timeline').datum(casesByDate).call(timeline);
 
     // calling the map
-    main(geoArr);
-
-
+    // main(dummyCases);
 
     function addLmaps() {
       let marker;
@@ -70,13 +102,11 @@ let getData = DataLoader()
         }).addTo(map);
       L.svg().addTo(map);
 
-      // var hexLayer = L.hexbinLayer().addTo(map);
-
       // locationArr.forEach(d => { marker = new L.marker([d.lat, d.lng]).addTo(map); });
       // locationArr.forEach(function(d) { d.LatLng = new L.LatLng(d.lat, d.lng) })
     }
 
-        function main(data){
+      function main(data){
       addLmaps();
       drawFeatures(data);   
     }
@@ -86,9 +116,16 @@ let getData = DataLoader()
       this.stream.point(point.x, point.y);
     }
 
+    function updateHexCoords(array) {
+      let test = []
+      array.forEach(el => {
+        let point = map.latLngToLayerPoint([el[1], el[0]]);
+        test.push([point.x, point.y]);
+      });
+      return test;
+    }
 
 
-    console.log(pixelCoords);
 
     function drawFeatures(data) {
       const svg = d3.select('#map').select('svg');
@@ -98,28 +135,9 @@ let getData = DataLoader()
       let path = d3.geoPath().projection(transform);
       path.pointRadius(7);
 
-      // var randomX = d3.randomNormal(width / 2, 80),
-      // randomY = d3.randomNormal(height / 2, 80),
-      // points = d3.range(50).map(function() { return [randomX(), randomY()]; });
-
-
-    coords.forEach(el => {
-      let point = map.latLngToLayerPoint([el[1], el[0]]);
-      
-      pixelCoords.push([point.x, point.y]);
-      return pixelCoords;
-    });
-
       let hex = hexbin()
-      .radius(20)
+      .radius(40)
         .extent([[0, 0], [width, height]])
-      
-      console.log(hex(pixelCoords));
-      console.log(coords);
-
-      let radius = d3.scaleLinear()
-        .domain([1, 3])
-        .range([5, 100]);
 
       let color = d3.scaleSequential(d3.interpolateLab("white", "steelblue"))
         .domain([1, 3]);
@@ -132,27 +150,32 @@ let getData = DataLoader()
           .attr('fill', 'red')
           .attr("fill-opacity", 0.2);
 
-      let hexagons = svg.append('g')
-        .attr('class', 'hexagon')
-        .selectAll('path')
-        .data(hex(pixelCoords).sort(function(a,b) { return b-length - a.length; }))
-        .enter().append('path')
-          .attr("d", hex.hexagon())
-          .attr("transform", function(d) {return "translate(" + d.x + "," + d.y + ")";
-          })
-          .attr("fill", function(d) { return color(d.length); })
-          .attr('fill-opacity', 1);
+      // let hexagons = svg.append('g')
+      //   .attr('class', 'hexagon')
+      //   .selectAll('path')
+      //   .data(hex(updateHexCoords(coords)).sort(function(a,b) { return b-length - a.length; }))
+      //   .enter().append('path')
+      //     .attr("d", hex.hexagon())
+      //     .attr("transform", function(d) {return "translate(" + d.x + "," + d.y + ")";
+      //     })
+      //     .attr("fill", function(d) { return color(d.length); })
+      //     .attr('fill-opacity', .5);
   
-      map.on('moveend', update);
+      map.on('zoom moveend', update);
       update();
   
       function update() {
-          featureElement.attr('d', path);
-          hexagons
-          .data(hex(pixelCoords).sort(function(a,b) { return b-length - a.length; }))
-          .attr("d", hex.hexagon())
-          hexagons.attr("transform", function(d) {return "translate(" + d.x + "," + d.y + ")";
-          })
+
+        // hex.radius(map.getZoom()*5);
+
+        console.log(updateHexCoords(coords));
+        featureElement.attr('d', path);
+        
+        // hexagons
+        // .data(hex(updateHexCoords(coords)).sort(function(a,b) { return b-length - a.length; }))
+        // .attr("d", hex.hexagon())
+        // hexagons.attr("transform", function(d) {return "translate(" + d.x + "," + d.y + ")";
+        // })
       }
     }
   }); //-->END .on('loaded')

@@ -53,6 +53,22 @@ function DataLoader(){
     }
   }
 
+	function parseDummy(d){
+		return {
+      type: "FeatureCollection",
+      "features": [
+	      { "type": "Feature",
+		      "geometry": {type: "Point", "coordinates": [+d.lng, +d.lat]},
+		      "properties": {
+						age: d.age,
+						eventDate: parseTime(d.eventDate),
+						town: d.town
+		      }
+	      }
+      ]
+    }
+  }
+
 	function parseLocation(loc){ return  loc.replace(/\[|\]/g, '').split(',') } //remove '[' and ']' from '[lng, lat]'
 
 	function parseTime(timeStr){
@@ -67,12 +83,13 @@ function DataLoader(){
 		q
 			.defer(csv, '../data/kenema_data.csv',parseCases)
 			.defer(csv, '../data/kenema_data.csv',parseGeoJson)
-			.await((err, cases, geocCases)=>{
+			.defer(csv, '../data/dummyData.csv', parseDummy)
+			.await((err, cases, geocCases, dummyCases)=>{
 				if (err){
 					dis.call('error', null, Error(err));
 					return; //break
 				}
-				dis.call('loaded', null, {cases: cases, geoCases: geocCases});
+				dis.call('loaded', null, {cases: cases, geoCases: geocCases, dummyCases: dummyCases});
 			});
 	}
 
