@@ -6,15 +6,19 @@ import * as L from 'leaflet';
 let _ = require('lodash');
 let cf = require('crossfilter');
 let pixelCoords = [];
-    let map;
+let map;
 
 
 // ** ------- JS MODULES ------- **
 import DataLoader from './data';
 import Timeline from './Timeline';
+import Details from './Details';
+import Secret from '../Secret';
 
+let dis = d3.dispatch('timeUpdate', 'hexHover');
+let details = Details();
 
-let dis = d3.dispatch('timeUpdate');
+d3.select('#details').datum([0]).call(details);
 
 // ** ------- MODULES INIT ------- **
 let timeline = Timeline().on('disBrush', data => {
@@ -22,6 +26,11 @@ let timeline = Timeline().on('disBrush', data => {
       endDate = data.endDate
 
   dis.call('timeUpdate', null, {start: startDate, end: endDate});
+
+  dis.call('hexHover', null, {data: startDate});
+
+
+
 });
 
 
@@ -62,19 +71,23 @@ function redraw(array) {
       path.pointRadius(7);
 
       let hex = hexbin()
-        .radius(40)
+        .radius(30)
         .extent([[0, 0], [width, height]])
 
-      let color = d3.scaleSequential(d3.interpolateLab("white", "steelblue"))
-        .domain([1, 3]);
+      // let color = d3.scaleSequential(d3.interpolateLab("#fef0d9", "#d7301f'"))
+      //   .domain([1, 3]);
 
-      // let featureElement = svg.selectAll('path')
-      //     .data(data)
-      //     .enter()
-      //     .append('path')
-      //     .attr('stroke', 'gray')
-      //     .attr('fill', 'red')
-      //     .attr("fill-opacity", 0.2);
+      let color = d3.scaleThreshold()
+        .domain([1, 5])
+        .range(['#fef0d9','#fdcc8a','#fc8d59','#d7301f'])
+
+      let featureElement = svg.selectAll('path')
+          .data(data)
+          .enter()
+          .append('path')
+          .attr('stroke', 'gray')
+          .attr('fill', 'red')
+          .attr("fill-opacity", 0.4)
 
       map.on('zoom movend viewreset', update);
       update();
@@ -98,6 +111,7 @@ function redraw(array) {
           .merge(hexagons)
             .attr("d", hex.hexagon())
             .attr("fill", function(d) { return color(d.length); })
+            .attr('stroke', 'gray')
             .attr("transform", function(d) {return "translate(" + d.x + "," + d.y + ")"; })
             
         hexagons.exit().remove();
@@ -118,15 +132,12 @@ let getData = DataLoader()
     const geoCases = data.geoCases;
     const dummyCases = data.dummyCases;
 
-
-      const mapLink = '<a href="http://openstreetmap.org">OpenStreetMap</a>';
-
-      map = L.map('map').setView([8.4506145, -11.3474766], 8);
-      L.tileLayer('http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: '&copy; ' + mapLink + ' Contributors',
-        maxZoom: 18,
-        }).addTo(map);
-      L.svg().addTo(map);
+    const mapLink = '<a href="http://openstreetmap.org">OpenStreetMap</a>';
+    map = L.map('map').setView([8.4506145, -11.3474766], 9);
+    L.tileLayer(`https://api.mapbox.com/styles/v1/mapbox/light-v9/tiles/256/{z}/{x}/{y}?access_token=${Secret.mapbox}`, {
+      maxZoom: 18,
+      }).addTo(map);
+    L.svg().addTo(map);
 
 
 

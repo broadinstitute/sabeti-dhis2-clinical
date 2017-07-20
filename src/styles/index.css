@@ -1,3 +1,8 @@
+* {
+	padding: 0;
+	margin: 0;
+}
+
 body, html {
     padding: 0px;
     margin: 0px;
@@ -10,11 +15,29 @@ body, html {
 	margin-bottom: 10px;
 }
 
+.title {
+	margin: 0;
+	padding: 0;
+}
+
 #map {
 	width: 100%;
-	min-height: 500px;
+	min-height: 80vh;
+	margin: 0;
+	padding: 0;
+	z-index: 1;
 }
 
 .markerContainer{
 	background-color: blue;
+}
+
+#timeline {
+	margin: 20px;
+	z-index: 100;
+}
+
+.brush .selection{
+	stroke: none;
+	fill: darkgray;
 }

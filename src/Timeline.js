@@ -1,7 +1,7 @@
 import * as d3 from 'd3';
 
 function Timeline(){
-	let W, H, M = {t:20,r:20,b:20,l:20};
+	let W, H, M = {t:20,r:30,b:20,l:30};
 	let dis = d3.dispatch('disBrush');
 
 	function exports(selection){
@@ -11,8 +11,6 @@ function Timeline(){
 
 		// ** ------- SCALES & AXES ------- **
 		let timeExtent = d3.extent(arr, function(d) { return new Date(d.key); })
-
-		console.log(timeExtent);
 
 		let scaleTime = d3.scaleTime()
 			.domain([timeExtent[0], timeExtent[1]])
@@ -25,12 +23,15 @@ function Timeline(){
 			.range([H, 0]);
 
 		let xAxis = d3.axisBottom(scaleTime)
-			// .tickFormat(d3.timeFormat("%Y-%m-%d"));
-		let yAxis = d3.axisLeft(scaleVals).ticks(4);
+			.tickFormat(d3.timeFormat("%b %e, '%y"));
+
+		let yAxis = d3.axisLeft(scaleVals)
+		.ticks(4);
+	// .tickSize(-W);
 
 		let brush = d3.brushX()
 			.extent([[0,0], [W, H]])
-			.on("brush", brushed);
+			.on("brush", brushed)
 
 		// ** ------- APPEND SVG ------- **
 		let svg = selection.selectAll('svg')
@@ -41,7 +42,7 @@ function Timeline(){
 			.attr('width', W + M.l + M.r)
 			.attr('height', H + M.t + M.b)
 
-		let plotEnter = svgEnter.append('g').attr('class','plot time-series')
+		let plotEnter = svgEnter.append('g').attr('class','plot timeline')
 			.attr('transform','translate('+M.l+','+M.t+')');
 
 		plotEnter.append('g').attr('class', 'axis axisX').attr('transform', 'translate(' + 0 + ',' + H + ')');
@@ -51,9 +52,9 @@ function Timeline(){
 				.attr('class', 'bars')
 		    .attr('x', function(d) { return scaleTime(new Date(d.key)); })
 		    .attr('y', function(d) { return scaleVals(d.value); })
-		    .attr('width', 5)
+		    .attr('width', 15)
 		    .attr('height', function(d) {return H - scaleVals(d.value); })
-		    .style('fill', '#000');
+		    .style('fill', '#666666');
 
 		svgEnter.select('.axisX').call(xAxis);
 		svgEnter.select('.axisY').call(yAxis);
@@ -79,7 +80,6 @@ function Timeline(){
 			};
 
 			if (d3.event.sourceEvent.type === 'brush') return;
-			
 			let d0 = selection.map(scaleTime.invert);
 			let d1 = d0.map(d3.timeDay.round);
 
@@ -87,10 +87,7 @@ function Timeline(){
 				d1[0] = d3.timeDay.floor(d0[0]);
 				d1[1] = d3.timeDay.offset(d1[0]);
 			}
-
 			d3.select(this).call(d3.event.target.move, d1.map(scaleTime));
-
-
 		}
 
 	};//-->END exports()

@@ -10,18 +10,25 @@
   </head>
   <body>
   	<div class="section">
-  		<div class="container">
+  		<div class="container-fluid">
   			<div class="row">
-  				<div class="col-lg-12 title">
-  					<h2>DHIS2 Kenema Genomic and Clinical Data</h1>
+  				<div class="col-lg-10">
+  					<!-- <h2>DHIS2 Kenema Genomic and Clinical Data</h1> -->
   					<div id="map" class="module"></div>
-  					<div id="timeline" class="module"></div>
   				</div>
+          <div class="col-lg-2">
+            <h4 id="details">Details</h4>
+            <p></p>
+          </div>
+          <div class="col-lg-10">
+            <h3>Timeline of confirmed cases</h3>
+            <div id="timeline" class="module"></div>
+          </div>
+
   			</div>
   		</div>
   	</div>
     <script src="https://code.jquery.com/jquery-3.2.1.min.js"></script>
-    <!-- <script src="../../src/D3SvgOverlay.js"></script> -->
     <script type="text/javascript" src="./assets/index.bundle.js"></script>
   </body>
 </html>
