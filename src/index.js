@@ -13,7 +13,7 @@ let pixelCoords = [];
 // ** ------- JS MODULES ------- **
 import DataLoader from './data';
 import Timeline from './Timeline';
-import LMap from './Map';
+// import LMap from './Map';
 
 
 let dis = d3.dispatch('timeUpdate');
@@ -49,7 +49,7 @@ function mainDraw(array) {
 
 }
 
-let mapFunction = LMap();
+// let mapFunction = LMap();
 
 // ** ------- DataLoader() ------- **
 let getData = DataLoader()
@@ -89,7 +89,12 @@ let getData = DataLoader()
     d3.select('#timeline').datum(casesByDate).call(timeline);
 
     // calling the map
-    // main(dummyCases);
+    main(dummyCases);
+
+          function main(data){
+      addLmaps();
+      drawFeatures(data);   
+    }
 
     function addLmaps() {
       let marker;
@@ -106,10 +111,7 @@ let getData = DataLoader()
       // locationArr.forEach(function(d) { d.LatLng = new L.LatLng(d.lat, d.lng) })
     }
 
-      function main(data){
-      addLmaps();
-      drawFeatures(data);   
-    }
+
 
     function projectPoint(x, y) {
       let point = map.latLngToLayerPoint(new L.LatLng(y, x));
@@ -150,18 +152,18 @@ let getData = DataLoader()
           .attr('fill', 'red')
           .attr("fill-opacity", 0.2);
 
-      // let hexagons = svg.append('g')
-      //   .attr('class', 'hexagon')
-      //   .selectAll('path')
-      //   .data(hex(updateHexCoords(coords)).sort(function(a,b) { return b-length - a.length; }))
-      //   .enter().append('path')
-      //     .attr("d", hex.hexagon())
-      //     .attr("transform", function(d) {return "translate(" + d.x + "," + d.y + ")";
-      //     })
-      //     .attr("fill", function(d) { return color(d.length); })
-      //     .attr('fill-opacity', .5);
+      let hexagons = svg.append('g')
+        .attr('class', 'hexagon')
+        .selectAll('path')
+        .data(hex(updateHexCoords(coords)).sort(function(a,b) { return b-length - a.length; }))
+        .enter().append('path')
+          .attr("d", hex.hexagon())
+          .attr("transform", function(d) {return "translate(" + d.x + "," + d.y + ")";
+          })
+          .attr("fill", function(d) { return color(d.length); })
+          .attr('fill-opacity', .5);
   
-      map.on('zoom moveend', update);
+      map.on('zoom', update);
       update();
   
       function update() {
@@ -171,11 +173,11 @@ let getData = DataLoader()
         console.log(updateHexCoords(coords));
         featureElement.attr('d', path);
         
-        // hexagons
-        // .data(hex(updateHexCoords(coords)).sort(function(a,b) { return b-length - a.length; }))
-        // .attr("d", hex.hexagon())
-        // hexagons.attr("transform", function(d) {return "translate(" + d.x + "," + d.y + ")";
-        // })
+        hexagons
+        .data(hex(updateHexCoords(coords)).sort(function(a,b) { return b-length - a.length; }))
+        .attr("d", hex.hexagon())
+        hexagons.attr("transform", function(d) {return "translate(" + d.x + "," + d.y + ")";
+        })
       }
     }
   }); //-->END .on('loaded')
