@@ -2,10 +2,8 @@
 import './styles/index.css';
 import * as d3 from 'd3';
 import {hexbin} from 'd3-hexbin';
-import {contourDensity} from 'd3-contour';
 import * as L from 'leaflet';
 let _ = require('lodash');
-// import '@asymmetrik/leaflet-d3'
 let cf = require('crossfilter');
 let pixelCoords = [];
 
@@ -13,16 +11,15 @@ let pixelCoords = [];
 // ** ------- JS MODULES ------- **
 import DataLoader from './data';
 import Timeline from './Timeline';
-// import LMap from './Map';
 
 
 let dis = d3.dispatch('timeUpdate');
 
 // ** ------- MAIN MAP ------- **
-let control = d3.map()
+// let control = d3.map()
 
-control.set('startDate', '');
-control.set('endDate', '');
+// control.set('startDate', '');
+// control.set('endDate', '');
 
 
 // ** ------- MODULES INIT ------- **
@@ -34,7 +31,7 @@ let timeline = Timeline().on('disBrush', data => {
 });
 
 
-function mainDraw(array) {
+function redraw(array) {
   let filtered = [];
 
   dis.on('timeUpdate', d => {
@@ -138,7 +135,7 @@ let getData = DataLoader()
       path.pointRadius(7);
 
       let hex = hexbin()
-      .radius(40)
+        .radius(40)
         .extent([[0, 0], [width, height]])
 
       let color = d3.scaleSequential(d3.interpolateLab("white", "steelblue"))
@@ -152,32 +149,34 @@ let getData = DataLoader()
           .attr('fill', 'red')
           .attr("fill-opacity", 0.2);
 
-      let hexagons = svg.append('g')
-        .attr('class', 'hexagon')
-        .selectAll('path')
-        .data(hex(updateHexCoords(coords)).sort(function(a,b) { return b-length - a.length; }))
-        .enter().append('path')
-          .attr("d", hex.hexagon())
-          .attr("transform", function(d) {return "translate(" + d.x + "," + d.y + ")";
-          })
-          .attr("fill", function(d) { return color(d.length); })
-          .attr('fill-opacity', .5);
-  
-      map.on('zoom', update);
+      map.on('zoom movend viewreset', update);
       update();
   
       function update() {
-
-        // hex.radius(map.getZoom()*5);
-
-        console.log(updateHexCoords(coords));
         featureElement.attr('d', path);
-        
-        hexagons
-        .data(hex(updateHexCoords(coords)).sort(function(a,b) { return b-length - a.length; }))
-        .attr("d", hex.hexagon())
-        hexagons.attr("transform", function(d) {return "translate(" + d.x + "," + d.y + ")";
-        })
+
+        d3.selectAll('.aHex').remove();
+
+        let hexagons = svg.append('g')
+          .selectAll('path')
+          .data(hex(updateHexCoords(coords)).sort(function(a,b) { return b-length - a.length; }))
+          .attr('class', 'hexagon');;
+
+        //UPDATE
+        hexagons.attr('class', 'hexagon');
+
+        //ENTER+UPDATE
+        hexagons.enter().append('path')
+          .attr('class', 'aHex')
+          .attr('fill-opacity', .5)
+          .merge(hexagons)
+            .attr("d", hex.hexagon())
+            .attr("fill", function(d) { return color(d.length); })
+            .attr("transform", function(d) {return "translate(" + d.x + "," + d.y + ")"; })
+            
+
+        hexagons.exit().remove();
+
       }
     }
   }); //-->END .on('loaded')
