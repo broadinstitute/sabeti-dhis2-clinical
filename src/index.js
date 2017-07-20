@@ -6,6 +6,7 @@ import * as L from 'leaflet';
 let _ = require('lodash');
 let cf = require('crossfilter');
 let pixelCoords = [];
+    let map;
 
 
 // ** ------- JS MODULES ------- **
@@ -14,13 +15,6 @@ import Timeline from './Timeline';
 
 
 let dis = d3.dispatch('timeUpdate');
-
-// ** ------- MAIN MAP ------- **
-// let control = d3.map()
-
-// control.set('startDate', '');
-// control.set('endDate', '');
-
 
 // ** ------- MODULES INIT ------- **
 let timeline = Timeline().on('disBrush', data => {
@@ -34,81 +28,18 @@ let timeline = Timeline().on('disBrush', data => {
 function redraw(array) {
   let filtered = [];
 
+
+
   dis.on('timeUpdate', d => {
+    let coords = [];
     filtered = _.filter(array, function(el) {
       return el.features[0].properties.eventDate >= d.start && el.features[0].properties.eventDate <= d.end
     })
-    
-    console.log(filtered.length);
-
-  });
-
-
-}
-
-// let mapFunction = LMap();
-
-// ** ------- DataLoader() ------- **
-let getData = DataLoader()
-  .on('error', err => { console.log(err); })
-
-  .on('loaded', data => {
-    let map;
-    const allCases = data.cases;
-    const geoCases = data.geoCases;
-    const dummyCases = data.dummyCases;
-
-    mainDraw(dummyCases);
-
-    // ** ------- Data Models ------- **
-    // nested by eventDate
-    const casesByDate = d3.nest()
-      .key(function(d) { return d.features[0].properties.eventDate; })
-      .rollup(function(cases) {return cases.length})
-      .entries(dummyCases);
-
-
-    //arrays with only objects that have a valid lat and long
-    let locationArr = allCases.filter(function(el) { return !(el.lat === undefined || el.lng === undefined) })
-
-    let geoArr = geoCases.filter(function(el, i){
-      return !(el.features[0].geometry.coordinates[0] === undefined || el.features[0].geometry.coordinates[1] === undefined)
-    })
 
     //array with all the coordinates (used for hexagonal binning)    
-    let coords = []
-    // geoArr.forEach(el => {coords.push([el.features[0].geometry.coordinates[0], el.features[0].geometry.coordinates[1]]) });
-    dummyCases.forEach(el => {coords.push([el.features[0].geometry.coordinates[0], el.features[0].geometry.coordinates[1]]) });
+    filtered.forEach(el => {coords.push([el.features[0].geometry.coordinates[0], el.features[0].geometry.coordinates[1]]) });
 
-
-    // ** ------- calling drawing functions ------- **
-    // calling the timeline
-    d3.select('#timeline').datum(casesByDate).call(timeline);
-
-    // calling the map
-    main(dummyCases);
-
-          function main(data){
-      addLmaps();
-      drawFeatures(data);   
-    }
-
-    function addLmaps() {
-      let marker;
-      const mapLink = '<a href="http://openstreetmap.org">OpenStreetMap</a>';
-
-      map = L.map('map').setView([8.4506145, -11.3474766], 8);
-      L.tileLayer('http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: '&copy; ' + mapLink + ' Contributors',
-        maxZoom: 18,
-        }).addTo(map);
-      L.svg().addTo(map);
-
-      // locationArr.forEach(d => { marker = new L.marker([d.lat, d.lng]).addTo(map); });
-      // locationArr.forEach(function(d) { d.LatLng = new L.LatLng(d.lat, d.lng) })
-    }
-
-
+    drawFeatures(filtered);
 
     function projectPoint(x, y) {
       let point = map.latLngToLayerPoint(new L.LatLng(y, x));
@@ -123,8 +54,6 @@ let getData = DataLoader()
       });
       return test;
     }
-
-
 
     function drawFeatures(data) {
       const svg = d3.select('#map').select('svg');
@@ -141,20 +70,19 @@ let getData = DataLoader()
       let color = d3.scaleSequential(d3.interpolateLab("white", "steelblue"))
         .domain([1, 3]);
 
-      let featureElement = svg.selectAll('path')
-          .data(data)
-          .enter()
-          .append('path')
-          .attr('stroke', 'gray')
-          .attr('fill', 'red')
-          .attr("fill-opacity", 0.2);
+      // let featureElement = svg.selectAll('path')
+      //     .data(data)
+      //     .enter()
+      //     .append('path')
+      //     .attr('stroke', 'gray')
+      //     .attr('fill', 'red')
+      //     .attr("fill-opacity", 0.2);
 
       map.on('zoom movend viewreset', update);
       update();
-  
-      function update() {
-        featureElement.attr('d', path);
 
+      function update() {
+        // featureElement.attr('d', path);
         d3.selectAll('.aHex').remove();
 
         let hexagons = svg.append('g')
@@ -174,11 +102,45 @@ let getData = DataLoader()
             .attr("fill", function(d) { return color(d.length); })
             .attr("transform", function(d) {return "translate(" + d.x + "," + d.y + ")"; })
             
-
         hexagons.exit().remove();
-
       }
-    }
+    } //-->END .drawFeatures()
+
+
+  });//-->END .on('timeUpdate')
+}
+
+// ** ------- DataLoader() ------- **
+let getData = DataLoader()
+  .on('error', err => { console.log(err); })
+
+  .on('loaded', data => {
+
+    const allCases = data.cases;
+    const geoCases = data.geoCases;
+    const dummyCases = data.dummyCases;
+
+
+      const mapLink = '<a href="http://openstreetmap.org">OpenStreetMap</a>';
+
+      map = L.map('map').setView([8.4506145, -11.3474766], 8);
+      L.tileLayer('http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; ' + mapLink + ' Contributors',
+        maxZoom: 18,
+        }).addTo(map);
+      L.svg().addTo(map);
+
+
+
+    const casesByDate = d3.nest()
+      .key(function(d) { return d.features[0].properties.eventDate; })
+      .rollup(function(cases) {return cases.length})
+      .entries(dummyCases);
+    d3.select('#timeline').datum(casesByDate).call(timeline);
+
+    redraw(dummyCases); //where all the magic happens
+
+ 
   }); //-->END .on('loaded')
 
 

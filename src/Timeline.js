@@ -30,7 +30,7 @@ function Timeline(){
 
 		let brush = d3.brushX()
 			.extent([[0,0], [W, H]])
-			.on("end", brushed);
+			.on("brush", brushed);
 
 		// ** ------- APPEND SVG ------- **
 		let svg = selection.selectAll('svg')
