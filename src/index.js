@@ -28,8 +28,6 @@ let timeline = Timeline().on('disBrush', data => {
 function redraw(array) {
   let filtered = [];
 
-
-
   dis.on('timeUpdate', d => {
     let coords = [];
     filtered = _.filter(array, function(el) {
@@ -139,7 +137,6 @@ let getData = DataLoader()
     d3.select('#timeline').datum(casesByDate).call(timeline);
 
     redraw(dummyCases); //where all the magic happens
-
  
   }); //-->END .on('loaded')
 

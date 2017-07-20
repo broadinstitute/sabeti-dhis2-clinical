@@ -65,12 +65,32 @@ function Timeline(){
 			.call(brush)
 			.call(brush.move, scaleTime.range())
 
+
 		function brushed() {
 			let selection = d3.event.selection;
 			let startDate = scaleTime.invert(selection[0]);
 			let endDate = scaleTime.invert(selection[1]);
 
 			dis.call('disBrush', null, {startDate: startDate, endDate: endDate});
+			
+			if (!d3.event.sourceEvent) {
+				setTimeout(function(d) { dis.call('disBrush', null, {startDate: startDate, endDate: endDate}); }, 1000)
+				return
+			};
+
+			if (d3.event.sourceEvent.type === 'brush') return;
+			
+			let d0 = selection.map(scaleTime.invert);
+			let d1 = d0.map(d3.timeDay.round);
+
+			if (d1[0] >= d1[1]) {
+				d1[0] = d3.timeDay.floor(d0[0]);
+				d1[1] = d3.timeDay.offset(d1[0]);
+			}
+
+			d3.select(this).call(d3.event.target.move, d1.map(scaleTime));
+
+
 		}
 
 	};//-->END exports()
