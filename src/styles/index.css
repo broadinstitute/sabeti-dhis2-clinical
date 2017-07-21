@@ -41,3 +41,15 @@ body, html {
 	stroke: none;
 	fill: darkgray;
 }
+
+#details {
+	height: 80px;
+}
+
+svg {
+	pointer-events: all;
+}
+
+.hexHover {
+	fill: purple;
+}

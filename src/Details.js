@@ -2,33 +2,17 @@ import * as d3 from 'd3';
 import Timeline from './Timeline';
 
 function Details(){
-	let W, H, M = {t:20,r:30,b:20,l:30};
-	let dis = d3.dispatch('hexHover');
+	let W, H, M = {t:10,r:10,b:10,l:10};
+	const formatTime = d3.timeFormat("%B %d, %Y");
+	let detailsNode = document.getElementById('details')
+	detailsNode.innerHTML = ''
 
 	function exports(selection){
 		let arr = selection.datum()?selection.datum():[];
 		W = W || selection.node().clientWidth - M.l - M.r;
 		H = H || selection.node().clientHeight - M.t - M.b;
-
-		let timeline = Timeline().on('disBrush', data => {
-  		let startDate = data.startDate,
-      endDate = data.endDate
-
-      console.log(startDate);
-    })
-
-		let svg = selection.selectAll('svg')
-			.data([0])
-
-		let svgEnter = svg.enter()
-			.append('svg') //ENTER
-			.attr('width', W + M.l + M.r)
-			.attr('height', H + M.t + M.b)
-
-		svgEnter
-			.append("text")
-			.text('some text')
-			.attr('dy', '1em');
+	
+		detailsNode.innerHTML = `${formatTime(new Date(arr.start))} - ${formatTime(new Date(arr.end))}`;
 
 	};//-->END exports()
 

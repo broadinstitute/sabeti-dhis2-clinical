@@ -18,7 +18,7 @@ import Secret from '../Secret';
 let dis = d3.dispatch('timeUpdate', 'hexHover');
 let details = Details();
 
-d3.select('#details').datum([0]).call(details);
+// 
 
 // ** ------- MODULES INIT ------- **
 let timeline = Timeline().on('disBrush', data => {
@@ -27,9 +27,7 @@ let timeline = Timeline().on('disBrush', data => {
 
   dis.call('timeUpdate', null, {start: startDate, end: endDate});
 
-  dis.call('hexHover', null, {data: startDate});
-
-
+  d3.select('#details').datum({start: startDate, end: endDate}).call(details);
 
 });
 
@@ -99,7 +97,7 @@ function redraw(array) {
         let hexagons = svg.append('g')
           .selectAll('path')
           .data(hex(updateHexCoords(coords)).sort(function(a,b) { return b-length - a.length; }))
-          .attr('class', 'hexagon');;
+          .attr('class', 'hexagon');
 
         //UPDATE
         hexagons.attr('class', 'hexagon');
@@ -112,7 +110,29 @@ function redraw(array) {
             .attr("d", hex.hexagon())
             .attr("fill", function(d) { return color(d.length); })
             .attr('stroke', 'gray')
+            .attr('style', 'pointer-events:visiblePainted;')
             .attr("transform", function(d) {return "translate(" + d.x + "," + d.y + ")"; })
+            .on('mouseover', function(d) {
+              d3.select(this).classed('hexHover', true);
+              
+              let detailsNode = document.getElementById('hexDetails');
+              let coords = map.layerPointToLatLng([d.x, d.y]);
+              const markup = `
+              <h5>
+                ${d.length} cases near</span>
+              </h5>
+              <h5>
+                ${coords.lat.toFixed(2)}, ${coords.lng.toFixed(2)}
+              </h5>
+              `;
+              detailsNode.innerHTML = markup;
+            })
+            .on("mouseout", function(d) {
+              d3.select(this).classed('hexHover', !d3.select(this).classed('hexHover'));
+
+              let detailsNode = document.getElementById('hexDetails');
+              detailsNode.innerHTML = '';
+            });
             
         hexagons.exit().remove();
       }
