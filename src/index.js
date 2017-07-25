@@ -16,6 +16,7 @@ import DataLoader from './data';
 import Timeline from './Timeline';
 import Details from './Details';
 import Fasta from './Fasta';
+import {projectPoint, updateHexCoords} from './Utils';
 import Secret from '../Secret';
 
 let dis = d3.dispatch('timeUpdate', 'hexHover');
@@ -55,19 +56,20 @@ function redraw(array) {
     }
 
     function updateHexCoords(array) {
-      let test = []
+      let newArr = []
       array.forEach(el => {
-        // console.log('fn', el);
         let point = map.latLngToLayerPoint([el[1], el[0]]);
-        test.push([point.x, point.y, el[2]]);
+        newArr.push([point.x, point.y, el[2]]);
       });
-      return test;
+      return newArr;
     }
 
     function drawFeatures(data) {
       const svg = d3.select('#map').select('svg');
       const width = +svg.attr('width');
       const height = +svg.attr('height');
+      
+
       let transform = d3.geoTransform({point: projectPoint});
       let path = d3.geoPath().projection(transform);
       path.pointRadius(7);
@@ -101,9 +103,6 @@ function redraw(array) {
 
       map.on('zoom movend viewreset', update);
       update();
-      // updateCases();
-
-
 
 
       document.getElementById('cases-btn').onclick = showCases;
@@ -127,12 +126,11 @@ function redraw(array) {
 
       function update() {
         featureElement.attr('d', path);
-        d3.selectAll('.aHex').remove();
+        // d3.selectAll('.aHex').remove();
 
-        let hexagons = svg.append('g')
+        let hexagons = svg
           .selectAll('path')
-          .data(hex(updateHexCoords(coords)).sort(function(a,b) { return b-length - a.length; }))
-          .attr('class', 'hexagon');
+          .data(hex(updateHexCoords(coords)).sort(function(a,b) { return b-length - a.length; }));
 
         //UPDATE
         hexagons.attr('class', 'hexagon');
@@ -141,12 +139,16 @@ function redraw(array) {
         hexagons.enter().append('path')
           .attr('class', 'aHex')
           .attr('fill-opacity', .5)
-          .merge(hexagons)
+            .merge(hexagons)
             .attr("d", hex.hexagon())
             .attr("fill", function(d) { return color(d.length); })
             .attr('stroke', 'gray')
             .attr('style', 'pointer-events:visiblePainted;')
             .attr("transform", function(d) {return "translate(" + d.x + "," + d.y + ")"; })
+            
+
+
+
             .on('mouseover', function(d) {
               let listOfIds = [];
               let detailsNode = document.getElementById('hexDetails');
@@ -179,7 +181,9 @@ function redraw(array) {
             });
             
         hexagons.exit().remove();
-      }
+
+
+      }//-->END .update()
     } //-->END .drawFeatures()
   });//-->END .on('timeUpdate')
 }
