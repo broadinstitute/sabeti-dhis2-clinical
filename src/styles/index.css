@@ -1,12 +1,33 @@
+@import url('https://fonts.googleapis.com/css?family=Roboto:300,400');
+
+
 * {
 	padding: 0;
 	margin: 0;
+	font-family: 'Roboto', sans-serif;
 }
 
 body, html {
     padding: 0px;
     margin: 0px;
     background: #f2f2f2;
+}
+
+.no-padding{
+	padding: 0
+}
+
+#map-section{
+	height: 100vh;
+	background-color: #7F858B;
+}
+
+#sidebar {
+  background-color:#394141;
+  height:100vh;
+  right:0;
+  color: #f2f2f2;
+  font-weight: 300;
 }
 
 .module {
@@ -32,8 +53,34 @@ body, html {
 	background-color: blue;
 }
 
+.timeline-container{
+	height: 100%;
+	background-color: #7F858B;
+	padding: 0px 20px 0px 15px; 
+}
+
+.timeline-container > h4{
+	margin-top: 20px;
+	color: #f2f2f2;
+	font-weight: 300;
+}
+
+.axis > .domain{
+	stroke: none;
+}
+
+.axis > .tick > line{
+	stroke: #f2f2f2;
+	stroke-opacity: 0.2;
+}
+
+.axis > .tick > text{
+	fill: #f2f2f2;
+	font-weight: 300;
+}
+
 #timeline {
-	margin: 20px;
+	/*margin: 20px;*/
 	z-index: 100;
 }
 

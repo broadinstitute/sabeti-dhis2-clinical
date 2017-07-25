@@ -5,6 +5,8 @@ import {hexbin} from 'd3-hexbin';
 import * as L from 'leaflet';
 let _ = require('lodash');
 let cf = require('crossfilter');
+require('es6-promise').polyfill();
+require('isomorphic-fetch');
 let pixelCoords = [];
 let map;
 
@@ -34,6 +36,18 @@ let timeline = Timeline().on('disBrush', data => {
 
 function redraw(array) {
   let filtered = [];
+
+ 
+fetch('https://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi?db=nuccore&id=KR105295.1&rettype=fasta&retmode=text')
+    .then(function(response) {
+        if (response.status >= 400) {
+            throw new Error("Bad response from server");
+        }
+        return response.text();
+    })
+    .then(function(fasta) {
+        console.log(fasta.split(',')[0]);
+    });
 
   dis.on('timeUpdate', d => {
     let coords = [];
@@ -75,8 +89,8 @@ function redraw(array) {
       // let color = d3.scaleSequential(d3.interpolateLab("#fef0d9", "#d7301f'"))
       //   .domain([1, 3]);
 
-      let color = d3.scaleThreshold()
-        .domain([1, 5])
+      let color = d3.scaleQuantize()
+        .domain([1, 7])
         .range(['#fef0d9','#fdcc8a','#fc8d59','#d7301f'])
 
       let featureElement = svg.selectAll('path')
@@ -152,13 +166,14 @@ let getData = DataLoader()
     const geoCases = data.geoCases;
     const dummyCases = data.dummyCases;
 
+    console.log(dummyCases);
+
     const mapLink = '<a href="http://openstreetmap.org">OpenStreetMap</a>';
     map = L.map('map').setView([8.4506145, -11.3474766], 9);
     L.tileLayer(`https://api.mapbox.com/styles/v1/mapbox/light-v9/tiles/256/{z}/{x}/{y}?access_token=${Secret.mapbox}`, {
       maxZoom: 18,
       }).addTo(map);
-    L.svg().addTo(map);
-
+    L.svg().addTo(map)
 
 
     const casesByDate = d3.nest()

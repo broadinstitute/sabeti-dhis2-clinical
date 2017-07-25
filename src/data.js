@@ -62,7 +62,8 @@ function DataLoader(){
 		      "properties": {
 						age: d.age,
 						eventDate: parseTime(d.eventDate),
-						town: d.town
+						town: d.town,
+						sequence: d.sequence
 		      }
 	      }
       ]

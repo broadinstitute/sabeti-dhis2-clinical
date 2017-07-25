@@ -9,26 +9,34 @@
    crossorigin=""/>
   </head>
   <body>
-  	<div class="section">
+  	<div id="map-section" class="section">
   		<div class="container-fluid">
   			<div class="row">
-  				<div class="col-lg-10">
+  				<div class="col-lg-10 no-padding">
   					<!-- <h2>DHIS2 Kenema Genomic and Clinical Data</h1> -->
   					<div id="map" class="module"></div>
-  				</div>
-          <div class="col-lg-2">
-            <h3>Details</h3>
+            <div class="timeline-container">
+              <h4>TIMELINE OF CONFIRMED CASES</h4>
+              <div id="timeline" class="module"></div>              
+            </div>
+          </div>
+          <div id="sidebar" class="col-lg-2 pane-container">
+            <h4>DETAILS</h4>
             <div id="details"></div>
             <div id="hexDetails"></div>
           </div>
-          <div class="col-lg-10">
-            <h3>Timeline of confirmed cases</h3>
-            <div id="timeline" class="module"></div>
-          </div>
-
   			</div>
   		</div>
   	</div>
+    <div class="container-fluid">
+      <div class="row">
+        <div class="col-lg-6">
+          <div class="extra-content">
+            <h1>This is some extra content below</h1>
+          </div>
+        </div>
+      </div>
+    </div>
     <script src="https://code.jquery.com/jquery-3.2.1.min.js"></script>
     <script type="text/javascript" src="./assets/index.bundle.js"></script>
   </body>

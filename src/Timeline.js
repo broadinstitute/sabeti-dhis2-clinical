@@ -26,8 +26,8 @@ function Timeline(){
 			.tickFormat(d3.timeFormat("%b %e, '%y"));
 
 		let yAxis = d3.axisLeft(scaleVals)
-		.ticks(4);
-	// .tickSize(-W);
+		.ticks(3)
+		.tickSize(-W);
 
 		let brush = d3.brushX()
 			.extent([[0,0], [W, H]])
@@ -45,8 +45,13 @@ function Timeline(){
 		let plotEnter = svgEnter.append('g').attr('class','plot timeline')
 			.attr('transform','translate('+M.l+','+M.t+')');
 
+
 		plotEnter.append('g').attr('class', 'axis axisX').attr('transform', 'translate(' + 0 + ',' + H + ')');
 		plotEnter.append('g').attr('class', 'axis axisY');
+
+		svgEnter.select('.axisX').call(xAxis);
+		svgEnter.select('.axisY').call(yAxis);
+
 
 		plotEnter.selectAll('.bars').data(arr).enter().append('rect')
 				.attr('class', 'bars')
@@ -54,10 +59,8 @@ function Timeline(){
 		    .attr('y', function(d) { return scaleVals(d.value); })
 		    .attr('width', 15)
 		    .attr('height', function(d) {return H - scaleVals(d.value); })
-		    .style('fill', '#666666');
+		    .style('fill', '#394141');
 
-		svgEnter.select('.axisX').call(xAxis);
-		svgEnter.select('.axisY').call(yAxis);
 
 		let context = plotEnter.append('g').attr('class', 'context').attr('transform', 'translate(' + 0 + ',' + 0 + ')');
 

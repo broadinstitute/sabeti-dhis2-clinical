@@ -55,11 +55,19 @@ c2a <- list('lat' = sample(lat2, length(dates1b), T),
 c2b <- list('lat' = sample(lat2, length(dates2), T),
             'lng' = sample(lng2, length(dates2), T))
 
+
+# randomly assign GenBank IDs
+seqID <- c('KR105295.1', 'KR105294.1', 'KR105266.1', 'KR105263.1', 'KR105318.1', 'KR105317.1', 'KR105316.1', 'KR105312.1',
+           'KR105311.1', 'KR105310.1', 'KR105308.1', 'KR105306.1', ' KR105300.1', 'KR105293.1', 'KR105285.1', 'KR105284.1')
+
+sequence <- sample(seqID, 200, T)
+
 # dataframes
 town1 <- data.frame(eventDate = dates1a, town = 'Bo', lat = c1$lat, lng = c1$lng, age = sample(30:60, length(dates1a), T))
 town2a <- data.frame(eventDate = dates1b, town = 'Kenema', lat = c2a$lat, lng = c2a$lng, age = sample(30:60, length(dates1b), T))
 town2b <- data.frame(eventDate = dates2, town = 'Kenema', lat = c2b$lat, lng = c2b$lng, age = sample(30:60, length(dates2), T))
 allcases <- rbind(town1, town2a, town2b)
+allcases <- cbind(allcases, sequence)
 
 
 library(scales)
@@ -69,4 +77,4 @@ ggplot(allcases, aes(x=eventDate, fill=town)) +
   scale_x_date(breaks=date_breaks(width="1 day"))
 
 
-write.csv(allcases, file = "dummyData.csv")
+# write.csv(allcases, file = "dummyData.csv")
