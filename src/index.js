@@ -15,6 +15,7 @@ let map;
 import DataLoader from './data';
 import Timeline from './Timeline';
 import Details from './Details';
+import Fasta from './Fasta';
 import Secret from '../Secret';
 
 let dis = d3.dispatch('timeUpdate', 'hexHover');
@@ -37,18 +38,6 @@ let timeline = Timeline().on('disBrush', data => {
 function redraw(array) {
   let filtered = [];
 
- 
-fetch('https://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi?db=nuccore&id=KR105295.1&rettype=fasta&retmode=text')
-    .then(function(response) {
-        if (response.status >= 400) {
-            throw new Error("Bad response from server");
-        }
-        return response.text();
-    })
-    .then(function(fasta) {
-        console.log(fasta.split(',')[0]);
-    });
-
   dis.on('timeUpdate', d => {
     let coords = [];
     filtered = _.filter(array, function(el) {
@@ -56,7 +45,7 @@ fetch('https://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi?db=nuccore&id=K
     })
 
     //array with all the coordinates (used for hexagonal binning)    
-    filtered.forEach(el => {coords.push([el.features[0].geometry.coordinates[0], el.features[0].geometry.coordinates[1]]) });
+    filtered.forEach(el => {coords.push([el.features[0].geometry.coordinates[0], el.features[0].geometry.coordinates[1], el.features[0].properties.sequence]) });
 
     drawFeatures(filtered);
 
@@ -68,8 +57,9 @@ fetch('https://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi?db=nuccore&id=K
     function updateHexCoords(array) {
       let test = []
       array.forEach(el => {
+        // console.log('fn', el);
         let point = map.latLngToLayerPoint([el[1], el[0]]);
-        test.push([point.x, point.y]);
+        test.push([point.x, point.y, el[2]]);
       });
       return test;
     }
@@ -86,9 +76,6 @@ fetch('https://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi?db=nuccore&id=K
         .radius(30)
         .extent([[0, 0], [width, height]])
 
-      // let color = d3.scaleSequential(d3.interpolateLab("#fef0d9", "#d7301f'"))
-      //   .domain([1, 3]);
-
       let color = d3.scaleQuantize()
         .domain([1, 7])
         .range(['#fef0d9','#fdcc8a','#fc8d59','#d7301f'])
@@ -97,15 +84,52 @@ fetch('https://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi?db=nuccore&id=K
           .data(data)
           .enter()
           .append('path')
+          .attr('class', 'point-case')
           .attr('stroke', 'gray')
           .attr('fill', 'red')
           .attr("fill-opacity", 0.4)
+          .attr('style', 'pointer-events:visiblePainted;')
+          .classed('hide', true)
+          .on('mouseover', function(d) {
+            let id = d.features[0].properties.sequence;
+            Fasta(id);
+          })
+          .on('mouseout', function(d) {
+            let detailsNode = document.getElementById('hexDetails');
+            detailsNode.innerHTML = '';
+          })
 
       map.on('zoom movend viewreset', update);
       update();
+      // updateCases();
+
+
+
+
+      document.getElementById('cases-btn').onclick = showCases;
+      document.getElementById('cluster-btn').onclick = showCluster;
+
+      function showCases() {
+        let points = d3.selectAll('.point-case');
+        let hexagons = d3.selectAll('.aHex');
+
+        points.classed('hide', !points.classed("hide"));
+        hexagons.classed('hide', !hexagons.classed("hide"));
+      }
+
+      function showCluster() {
+        let points = d3.selectAll('.point-case');
+        let hexagons = d3.selectAll('.aHex');
+
+        points.classed('hide', !points.classed("hide"));
+        hexagons.classed('hide', !hexagons.classed("hide"));
+      }
+
+
+
 
       function update() {
-        // featureElement.attr('d', path);
+        featureElement.attr('d', path);
         d3.selectAll('.aHex').remove();
 
         let hexagons = svg.append('g')
@@ -127,10 +151,17 @@ fetch('https://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi?db=nuccore&id=K
             .attr('style', 'pointer-events:visiblePainted;')
             .attr("transform", function(d) {return "translate(" + d.x + "," + d.y + ")"; })
             .on('mouseover', function(d) {
-              d3.select(this).classed('hexHover', true);
-              
+              let listOfIds = [];
               let detailsNode = document.getElementById('hexDetails');
               let coords = map.layerPointToLatLng([d.x, d.y]);
+
+              d3.select(this).classed('hexHover', true);
+
+              d.forEach(d => {
+                listOfIds.push(d[2])
+                return listOfIds;
+              })
+              
               const markup = `
               <h5>
                 ${d.length} cases near</span>
@@ -138,9 +169,11 @@ fetch('https://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi?db=nuccore&id=K
               <h5>
                 ${coords.lat.toFixed(2)}, ${coords.lng.toFixed(2)}
               </h5>
+              <ul></ul>
               `;
               detailsNode.innerHTML = markup;
             })
+
             .on("mouseout", function(d) {
               d3.select(this).classed('hexHover', !d3.select(this).classed('hexHover'));
 
@@ -151,8 +184,6 @@ fetch('https://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi?db=nuccore&id=K
         hexagons.exit().remove();
       }
     } //-->END .drawFeatures()
-
-
   });//-->END .on('timeUpdate')
 }
 
@@ -165,8 +196,6 @@ let getData = DataLoader()
     const allCases = data.cases;
     const geoCases = data.geoCases;
     const dummyCases = data.dummyCases;
-
-    console.log(dummyCases);
 
     const mapLink = '<a href="http://openstreetmap.org">OpenStreetMap</a>';
     map = L.map('map').setView([8.4506145, -11.3474766], 9);

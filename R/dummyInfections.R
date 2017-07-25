@@ -77,4 +77,4 @@ ggplot(allcases, aes(x=eventDate, fill=town)) +
   scale_x_date(breaks=date_breaks(width="1 day"))
 
 
-# write.csv(allcases, file = "dummyData.csv")
+write.csv(allcases, file = "~/projects/web-dhis2/dummyDataV2.csv")

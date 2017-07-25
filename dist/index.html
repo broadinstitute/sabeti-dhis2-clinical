@@ -22,6 +22,12 @@
           </div>
           <div id="sidebar" class="col-lg-2 pane-container">
             <h4>DETAILS</h4>
+            <div id="radios" class="btn-group" data-toggle="buttons">
+              <label class="btn btn-default checked" id="cluster-btn">
+                <input type="radio" name="options" value="1"/> Cluster</label>
+              <label class="btn btn-default" id="cases-btn">
+                <input type="radio" name="options" value="0" checked/> Cases</label>
+            </div>
             <div id="details"></div>
             <div id="hexDetails"></div>
           </div>
@@ -38,6 +44,7 @@
       </div>
     </div>
     <script src="https://code.jquery.com/jquery-3.2.1.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.2.0/js/bootstrap.min.js"></script>
     <script type="text/javascript" src="./assets/index.bundle.js"></script>
   </body>
 </html>

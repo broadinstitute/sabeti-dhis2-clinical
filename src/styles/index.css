@@ -100,3 +100,7 @@ svg {
 .hexHover {
 	fill: purple;
 }
+
+.hide {
+	visibility: hidden;
+}
