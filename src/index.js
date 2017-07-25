@@ -125,9 +125,6 @@ function redraw(array) {
         hexagons.classed('hide', !hexagons.classed("hide"));
       }
 
-
-
-
       function update() {
         featureElement.attr('d', path);
         d3.selectAll('.aHex').remove();
