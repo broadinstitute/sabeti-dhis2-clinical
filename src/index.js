@@ -16,7 +16,6 @@ import DataLoader from './data';
 import Timeline from './Timeline';
 import Details from './Details';
 import Fasta from './Fasta';
-import {projectPoint, updateHexCoords} from './Utils';
 import Secret from '../Secret';
 
 let dis = d3.dispatch('timeUpdate', 'hexHover');
@@ -69,7 +68,6 @@ function redraw(array) {
       const width = +svg.attr('width');
       const height = +svg.attr('height');
       
-
       let transform = d3.geoTransform({point: projectPoint});
       let path = d3.geoPath().projection(transform);
       path.pointRadius(7);
@@ -104,32 +102,11 @@ function redraw(array) {
       map.on('zoom movend viewreset', update);
       update();
 
-
-      document.getElementById('cases-btn').onclick = showCases;
-      document.getElementById('cluster-btn').onclick = showCluster;
-
-      function showCases() {
-        let points = d3.selectAll('.point-case');
-        let hexagons = d3.selectAll('.aHex');
-
-        points.classed('hide', !points.classed("hide"));
-        hexagons.classed('hide', !hexagons.classed("hide"));
-      }
-
-      function showCluster() {
-        let points = d3.selectAll('.point-case');
-        let hexagons = d3.selectAll('.aHex');
-
-        points.classed('hide', !points.classed("hide"));
-        hexagons.classed('hide', !hexagons.classed("hide"));
-      }
-
       function update() {
         featureElement.attr('d', path);
-        // d3.selectAll('.aHex').remove();
 
         let hexagons = svg
-          .selectAll('path')
+          .selectAll('aHex')
           .data(hex(updateHexCoords(coords)).sort(function(a,b) { return b-length - a.length; }));
 
         //UPDATE
@@ -184,6 +161,25 @@ function redraw(array) {
 
 
       }//-->END .update()
+
+    document.getElementById('cases-btn').onclick = showCases;
+    document.getElementById('cluster-btn').onclick = showCluster;
+
+    function showCases() {
+      let points = d3.selectAll('.point-case');
+      let hexagons = d3.selectAll('.aHex');
+
+      points.classed('hide', !points.classed("hide"));
+      hexagons.classed('hide', !hexagons.classed("hide"));
+    }
+
+    function showCluster() {
+      let points = d3.selectAll('.point-case');
+      let hexagons = d3.selectAll('.aHex');
+
+      points.classed('hide', !points.classed("hide"));
+      hexagons.classed('hide', !hexagons.classed("hide"));
+    }
     } //-->END .drawFeatures()
   });//-->END .on('timeUpdate')
 }
