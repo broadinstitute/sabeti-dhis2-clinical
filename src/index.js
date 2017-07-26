@@ -17,9 +17,11 @@ import Timeline from './Timeline';
 import Details from './Details';
 import Fasta from './Fasta';
 import Secret from '../Secret';
+import LMap from './Map';
 
 let dis = d3.dispatch('timeUpdate', 'hexHover');
 let details = Details();
+
 
 // 
 
@@ -34,6 +36,31 @@ let timeline = Timeline().on('disBrush', data => {
 
 });
 
+// function call(){
+//   var request = require('request');
+
+//   var headers = {
+//       'Authorization': 'Bearer d330c834-9687-4544-b320-3fc68364d543'
+//   };
+
+//   var options = {
+//       url: 'https://play.dhis2.org/dev/api/dataElements.json',
+//       headers: headers
+//   };
+
+//   function callback(error, response, body) {
+//       if (!error && response.statusCode == 200) {
+//           console.log(body);
+//       }
+//       console.log(response);
+//   }
+
+//   request(options, callback);
+
+// }
+
+// call();
+
 
 function redraw(array) {
   let filtered = [];
@@ -47,140 +74,9 @@ function redraw(array) {
     //array with all the coordinates (used for hexagonal binning)    
     filtered.forEach(el => {coords.push([el.features[0].geometry.coordinates[0], el.features[0].geometry.coordinates[1], el.features[0].properties.sequence]) });
 
-    drawFeatures(filtered);
-
-    function projectPoint(x, y) {
-      let point = map.latLngToLayerPoint(new L.LatLng(y, x));
-      this.stream.point(point.x, point.y);
-    }
-
-    function updateHexCoords(array) {
-      let newArr = []
-      array.forEach(el => {
-        let point = map.latLngToLayerPoint([el[1], el[0]]);
-        newArr.push([point.x, point.y, el[2]]);
-      });
-      return newArr;
-    }
-
-    function drawFeatures(data) {
-      const svg = d3.select('#map').select('svg');
-      const width = +svg.attr('width');
-      const height = +svg.attr('height');
-      
-      let transform = d3.geoTransform({point: projectPoint});
-      let path = d3.geoPath().projection(transform);
-      path.pointRadius(7);
-
-      let hex = hexbin()
-        .radius(30)
-        .extent([[0, 0], [width, height]])
-
-      let color = d3.scaleQuantize()
-        .domain([1, 7])
-        .range(['#fef0d9','#fdcc8a','#fc8d59','#d7301f'])
-
-      let featureElement = svg.selectAll('path')
-          .data(data)
-          .enter()
-          .append('path')
-          .attr('class', 'point-case')
-          .attr('stroke', 'gray')
-          .attr('fill', 'red')
-          .attr("fill-opacity", 0.4)
-          .attr('style', 'pointer-events:visiblePainted;')
-          .classed('hide', true)
-          .on('mouseover', function(d) {
-            let id = d.features[0].properties.sequence;
-            Fasta(id);
-          })
-          .on('mouseout', function(d) {
-            let detailsNode = document.getElementById('hexDetails');
-            detailsNode.innerHTML = '';
-          })
-
-      map.on('zoom movend viewreset', update);
-      update();
-
-      function update() {
-        featureElement.attr('d', path);
-
-        let hexagons = svg
-          .selectAll('aHex')
-          .data(hex(updateHexCoords(coords)).sort(function(a,b) { return b-length - a.length; }));
-
-        //UPDATE
-        hexagons.attr('class', 'hexagon');
-
-        //ENTER+UPDATE
-        hexagons.enter().append('path')
-          .attr('class', 'aHex')
-          .attr('fill-opacity', .5)
-            .merge(hexagons)
-            .attr("d", hex.hexagon())
-            .attr("fill", function(d) { return color(d.length); })
-            .attr('stroke', 'gray')
-            .attr('style', 'pointer-events:visiblePainted;')
-            .attr("transform", function(d) {return "translate(" + d.x + "," + d.y + ")"; })
-            
+    LMap(map, filtered, coords);
 
 
-
-            .on('mouseover', function(d) {
-              let listOfIds = [];
-              let detailsNode = document.getElementById('hexDetails');
-              let coords = map.layerPointToLatLng([d.x, d.y]);
-
-              d3.select(this).classed('hexHover', true);
-
-              d.forEach(d => {
-                listOfIds.push(d[2])
-                return listOfIds;
-              })
-              
-              const markup = `
-              <h5>
-                ${d.length} cases near</span>
-              </h5>
-              <h5>
-                ${coords.lat.toFixed(2)}, ${coords.lng.toFixed(2)}
-              </h5>
-              <ul></ul>
-              `;
-              detailsNode.innerHTML = markup;
-            })
-
-            .on("mouseout", function(d) {
-              d3.select(this).classed('hexHover', !d3.select(this).classed('hexHover'));
-
-              let detailsNode = document.getElementById('hexDetails');
-              detailsNode.innerHTML = '';
-            });
-            
-        hexagons.exit().remove();
-
-
-      }//-->END .update()
-
-    document.getElementById('cases-btn').onclick = showCases;
-    document.getElementById('cluster-btn').onclick = showCluster;
-
-    function showCases() {
-      let points = d3.selectAll('.point-case');
-      let hexagons = d3.selectAll('.aHex');
-
-      points.classed('hide', !points.classed("hide"));
-      hexagons.classed('hide', !hexagons.classed("hide"));
-    }
-
-    function showCluster() {
-      let points = d3.selectAll('.point-case');
-      let hexagons = d3.selectAll('.aHex');
-
-      points.classed('hide', !points.classed("hide"));
-      hexagons.classed('hide', !hexagons.classed("hide"));
-    }
-    } //-->END .drawFeatures()
   });//-->END .on('timeUpdate')
 }
 

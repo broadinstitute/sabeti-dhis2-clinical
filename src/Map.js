@@ -1,12 +1,16 @@
 import * as d3 from 'd3';
 import * as L from 'leaflet';
+import {hexbin} from 'd3-hexbin';
 
-function LMap(data){
+function LMap(mapObj, data, coordinates){
       const svg = d3.select('#map').select('svg');
       const width = +svg.attr('width');
       const height = +svg.attr('height');
+      const map = mapObj;
+      let coords = coordinates;
 
-      function exports(selection){    
+
+        console.log('mapping')
         let transform = d3.geoTransform({point: projectPoint});
         let path = d3.geoPath().projection(transform);
         path.pointRadius(7);
@@ -39,6 +43,7 @@ function LMap(data){
             })
 
         map.on('zoom movend viewreset', update);
+        console.log('zooming now');
         update();
 
         function update() {
@@ -94,23 +99,37 @@ function LMap(data){
               });
               
           hexagons.exit().remove();
-        }//-->END .update()
-      }
+        }//-->END .update() 
+
+
+        function projectPoint(x, y) {
+  let point = map.latLngToLayerPoint(new L.LatLng(y, x));
+  this.stream.point(point.x, point.y);
+}
+
+            function updateHexCoords(array) {
+              let test = []
+              array.forEach(el => {
+                let point = map.latLngToLayerPoint([el[1], el[0]]);
+                test.push([point.x, point.y]);
+              });
+              return test;
+            }
 }
 
 export default LMap;
 
 // ** ------- ACCESORY FUNCTIONS ------- **
-function projectPoint(x, y) {
-  let point = map.latLngToLayerPoint(new L.LatLng(y, x));
-  this.stream.point(point.x, point.y);
-}
+// function projectPoint(x, y) {
+//   let point = map.latLngToLayerPoint(new L.LatLng(y, x));
+//   this.stream.point(point.x, point.y);
+// }
 
-function updateHexCoords(array) {
-  let test = []
-  array.forEach(el => {
-    let point = map.latLngToLayerPoint([el[1], el[0]]);
-    test.push([point.x, point.y]);
-  });
-  return test;
-}
+// function updateHexCoords(array) {
+//   let test = []
+//   array.forEach(el => {
+//     let point = map.latLngToLayerPoint([el[1], el[0]]);
+//     test.push([point.x, point.y]);
+//   });
+//   return test;
+// }
