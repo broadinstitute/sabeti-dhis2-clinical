@@ -135,6 +135,8 @@ function redraw(array) {
         //UPDATE
         hexagons.attr('class', 'hexagon');
 
+        hexagons.exit().remove();
+
         //ENTER+UPDATE
         hexagons.enter().append('path')
           .attr('class', 'aHex')
@@ -180,7 +182,7 @@ function redraw(array) {
               detailsNode.innerHTML = '';
             });
             
-        hexagons.exit().remove();
+        
 
 
       }//-->END .update()
