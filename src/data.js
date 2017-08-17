@@ -84,7 +84,7 @@ function DataLoader(){
 		q
 			.defer(csv, '../data/kenema_data.csv',parseCases)
 			.defer(csv, '../data/kenema_data.csv',parseGeoJson)
-			.defer(csv, '../data/dummyData.csv', parseDummy)
+			.defer(csv, '../data/dummyDataV3.csv', parseDummy)
 			.await((err, cases, geocCases, dummyCases)=>{
 				if (err){
 					dis.call('error', null, Error(err));

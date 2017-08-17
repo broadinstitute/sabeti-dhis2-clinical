@@ -4,9 +4,6 @@ import * as d3 from 'd3';
 import {hexbin} from 'd3-hexbin';
 import * as L from 'leaflet';
 let _ = require('lodash');
-let cf = require('crossfilter');
-require('es6-promise').polyfill();
-require('isomorphic-fetch');
 let pixelCoords = [];
 let map;
 
@@ -16,6 +13,7 @@ import DataLoader from './data';
 import Timeline from './Timeline';
 import Details from './Details';
 import Fasta from './Fasta';
+import {projectPoint, updateHexCoords} from './Utils';
 import Secret from '../Secret';
 
 let dis = d3.dispatch('timeUpdate', 'hexHover');
@@ -68,6 +66,7 @@ function redraw(array) {
       const width = +svg.attr('width');
       const height = +svg.attr('height');
       
+
       let transform = d3.geoTransform({point: projectPoint});
       let path = d3.geoPath().projection(transform);
       path.pointRadius(7);
@@ -102,11 +101,32 @@ function redraw(array) {
       map.on('zoom movend viewreset', update);
       update();
 
+
+      document.getElementById('cases-btn').onclick = showCases;
+      document.getElementById('cluster-btn').onclick = showCluster;
+
+      function showCases() {
+        let points = d3.selectAll('.point-case');
+        let hexagons = d3.selectAll('.aHex');
+
+        points.classed('hide', !points.classed("hide"));
+        hexagons.classed('hide', !hexagons.classed("hide"));
+      }
+
+      function showCluster() {
+        let points = d3.selectAll('.point-case');
+        let hexagons = d3.selectAll('.aHex');
+
+        points.classed('hide', !points.classed("hide"));
+        hexagons.classed('hide', !hexagons.classed("hide"));
+      }
+
       function update() {
         featureElement.attr('d', path);
+        // d3.selectAll('.aHex').remove();
 
         let hexagons = svg
-          .selectAll('aHex')
+          .selectAll('path')
           .data(hex(updateHexCoords(coords)).sort(function(a,b) { return b-length - a.length; }));
 
         //UPDATE
@@ -159,29 +179,8 @@ function redraw(array) {
               detailsNode.innerHTML = '';
             });
             
-        
-
-
+      
       }//-->END .update()
-
-    document.getElementById('cases-btn').onclick = showCases;
-    document.getElementById('cluster-btn').onclick = showCluster;
-
-    function showCases() {
-      let points = d3.selectAll('.point-case');
-      let hexagons = d3.selectAll('.aHex');
-
-      points.classed('hide', !points.classed("hide"));
-      hexagons.classed('hide', !hexagons.classed("hide"));
-    }
-
-    function showCluster() {
-      let points = d3.selectAll('.point-case');
-      let hexagons = d3.selectAll('.aHex');
-
-      points.classed('hide', !points.classed("hide"));
-      hexagons.classed('hide', !hexagons.classed("hide"));
-    }
     } //-->END .drawFeatures()
   });//-->END .on('timeUpdate')
 }
@@ -209,6 +208,8 @@ let getData = DataLoader()
       .rollup(function(cases) {return cases.length})
       .entries(dummyCases);
     d3.select('#timeline').datum(casesByDate).call(timeline);
+
+    console.log(casesByDate);
 
     redraw(dummyCases); //where all the magic happens
  

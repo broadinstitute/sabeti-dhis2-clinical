@@ -36,8 +36,8 @@ dates2 <- as.Date(sprintf("2014-06-%d", D2))
 # create random locations
 
 #for town 1
-lat1 <- seq(7.6, 8.3, by = 0.03)
-lng1 <- seq(-12.14, -11.3, by = 0.03)
+lat1 <- seq(8.81, 9.34, by = 0.03)
+lng1 <- seq(-12.48, -11.8, by = 0.03)
 
 # for town 2
 lat2 <- seq(7.6, 8.2, by = 0.03)
@@ -50,7 +50,7 @@ c1 <- list('lat' = sample(lat1, length(dates1a), T),
 
 
 c2a <- list('lat' = sample(lat2, length(dates1b), T),
-           'lng' = sample(lng2, length(dates1b), T))
+            'lng' = sample(lng2, length(dates1b), T))
 
 c2b <- list('lat' = sample(lat2, length(dates2), T),
             'lng' = sample(lng2, length(dates2), T))
@@ -70,11 +70,11 @@ allcases <- rbind(town1, town2a, town2b)
 allcases <- cbind(allcases, sequence)
 
 
-library(scales)
-library(ggplot2)
-ggplot(allcases, aes(x=eventDate, fill=town)) +
-  stat_bin(binwidth=1, position="identity") +
-  scale_x_date(breaks=date_breaks(width="1 day"))
+# library(scales)
+# library(ggplot2)
+# ggplot(allcases, aes(x=eventDate, fill=town)) +
+#   stat_bin(binwidth=1, position="identity") +
+#   scale_x_date(breaks=date_breaks(width="1 day"))
+# 
 
-
-write.csv(allcases, file = "~/projects/web-dhis2/dummyDataV2.csv")
+write.csv(allcases, file = "~/projects/web-dhis2/dummyDataV3.csv")
