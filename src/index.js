@@ -14,7 +14,7 @@ import Timeline from './Timeline';
 import Details from './Details';
 import Fasta from './Fasta';
 import {projectPoint, updateHexCoords} from './Utils';
-import Secret from '../Secret';
+import Secret from '../Secret'; //go to Secret.js and add your own MapBox key
 
 let dis = d3.dispatch('timeUpdate', 'hexHover');
 let details = Details();
