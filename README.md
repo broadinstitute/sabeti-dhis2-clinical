@@ -8,3 +8,5 @@ This application connects to the DHIS2 platform and retrieves outbreak program d
 4. Optionally, run `npm run build` to compile
 
 This project uses node.js and webpack.
+
+[Online guide](http://jotasolano.github.io/sabeti-dhis2/).
